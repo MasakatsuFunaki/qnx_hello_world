@@ -1,0 +1,14 @@
+# Bazel build outputs
+bazel-*
+.bazel-*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,22 @@
+@startuml bazel_architecture
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Monospaced
+skinparam arrowColor #555555
+
+title **QNX Hello World – Bazel Build Architecture**
+
+rectangle "MODULE.bazel" as module #E8F0FE
+rectangle "src/main.cpp" as src #E8F5E9
+rectangle "toolchain/" as tc #FFF3E0
+cloud "QNX SDP 8.0" as sdk #E0E0E0
+rectangle "x86_64 / aarch64" as targets #EDE7F6
+rectangle "bazel-bin/src/hello_world" as output #FFFDE7
+
+module -down-> src : "builds"
+module -down-> tc : "registers toolchain"
+tc -right-> sdk : "resolves SDK"
+tc -down-> targets : "cross-compiles for"
+src -down-> output : "produces"
+
+@enduml

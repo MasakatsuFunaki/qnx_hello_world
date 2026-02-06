@@ -1,0 +1,18 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# QNX cross-compilation configurations
+# Usage:
+#   bazel build //src:hello_world --config=qnx_x86_64
+#   bazel build //src:hello_world --config=qnx_aarch64
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Shared QNX environment – inherit from shell (source qnxsdp-env.sh first)
+build:qnx --action_env=QNX_HOST
+build:qnx --action_env=QNX_TARGET
+
+# QNX x86_64
+build:qnx_x86_64 --config=qnx
+build:qnx_x86_64 --platforms=//toolchain:qnx_x86_64
+
+# QNX aarch64 (ARM 64-bit)
+build:qnx_aarch64 --config=qnx
+build:qnx_aarch64 --platforms=//toolchain:qnx_aarch64
