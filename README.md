@@ -41,12 +41,28 @@ java -jar plantuml.jar -tpng bazel_architecture.puml
 
 > Download `plantuml.jar` from [plantuml.com/download](https://plantuml.com/download). Requires Java 17+.
 
+## Tests
+
+The `tests/` directory verifies the toolchain handles modern C++ features,
+STL containers, threading, various library types, build configurations,
+and QNX-specific APIs.
+
+```bash
+# Build all tests for both architectures
+bazel build //tests/... --config=qnx_aarch64
+bazel build //tests/... --config=qnx_x86_64
+```
+
+See [tests/README.md](tests/README.md) for the full list of test categories and usage.
+
 ## Project Structure
 
 ```
 ├── src/
 │   ├── BUILD              # cc_binary target
 │   └── main.cpp           # Source code
+├── tests/                 # Cross-compilation test suite
+│   └── README.md          # Test categories & usage
 ├── toolchain/
 │   ├── BUILD              # Platform & toolchain definitions
 │   ├── cc_toolchain_config.bzl  # Cross-compiler config

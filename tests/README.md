@@ -1,6 +1,6 @@
 # QNX Bazel Toolchain Test Suite
 
-This directory contains comprehensive tests for the QNX cross-compilation
+Tests for the QNX cross-compilation
 Bazel toolchain. The tests verify that the toolchain correctly handles
 a wide range of C++ features, library types, and build configurations.
 
