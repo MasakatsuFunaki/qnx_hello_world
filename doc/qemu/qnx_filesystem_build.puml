@@ -3,108 +3,36 @@
 skinparam backgroundColor #FEFEFE
 skinparam defaultFontName Monospaced
 skinparam arrowColor #555555
-skinparam rectangleBorderColor #888888
-skinparam noteBorderColor #AAAAAA
 
-title **QNX QEMU — Image Build & Virtual Hardware**
+title **QNX QEMU — Image Build & Boot**
 
-' ── QNX SDP ──────────────────────────────────────────────
-rectangle "QNX SDP 8.0" as sdp #FFF3E0 {
-    rectangle "qnxsdp-env.sh\nsets QNX_TARGET, QNX_HOST" as env #FFE0B2
-    rectangle "mkqnximage\n(host/common/bin/)" as mkqnx #FFE0B2
-    rectangle "procnto-smp-instr\n(QNX Neutrino micro-kernel)" as kernel #FFE0B2
-}
-
-' ── Inputs to mkqnximage ─────────────────────────────────
 rectangle "Cross-compiled\nbinaries" as bins #E8F5E9
+rectangle "data_files.custom\n(snippet)" as snippet #B2DFDB
 
-rectangle "mkqnximage workspace" as ws #E0F7FA {
-    rectangle "local/snippets/\ndata_files.custom" as snippet #B2DFDB
+rectangle "QNX SDP 8.0" as sdp #FFF3E0 {
+    rectangle "mkqnximage" as mkqnx #FFE0B2
 }
 
-' ── mkqnximage output ────────────────────────────────────
-rectangle "mkqnximage output/" as output #FCE4EC {
-    rectangle "ifs.bin" as ifs #F8BBD0
-    rectangle "disk-qemu.vmdk" as disk #F8BBD0
+rectangle "mkqnximage output" as output #FCE4EC {
+    rectangle "ifs.bin\n(micro-kernel + drivers)" as ifs #F8BBD0
+    rectangle "disk-qemu.vmdk\n(root filesystem)" as disk #F8BBD0
 }
 
-note right of ifs
-  **IFS (Image Filesystem)**
-  Boot image loaded by QEMU as -kernel
-  Contains:
-  • procnto-smp-instr (micro-kernel)
-  • startup code & hw detection
-  • early drivers (block, net, serial)
-  • ksh shell & core utilities
-end note
-
-note right of disk
-  **VMDK disk image**
-  Virtual hard disk with QNX root
-  filesystem (/, /data/, ...)
-  Custom binaries land under
-  /data/home/root/
-end note
-
-' ── QEMU virtual hardware ────────────────────────────────
-rectangle "QEMU Virtual Machine" as qemu #E0E0E0 {
-
-    rectangle "x86_64 machine" as x86 #EEEEEE {
-        rectangle "i440FX chipset\n(default PC)" as x86_mach
-        rectangle "IDE disk\n(devb-eide)" as x86_disk #CFD8DC
-        rectangle "virtio-net-pci" as x86_net #CFD8DC
-        rectangle "virtio-rng-pci" as x86_rng #CFD8DC
-    }
-
-    rectangle "aarch64 machine" as arm #EEEEEE {
-        rectangle "virt-4.2\n(ARM virtual platform)" as arm_mach
-        rectangle "virtio-blk-device\nMMIO (devb-virtio)" as arm_disk #CFD8DC
-        rectangle "virtio-net-device\nMMIO" as arm_net #CFD8DC
-        rectangle "virtio-rng-device\nMMIO" as arm_rng #CFD8DC
-    }
-
-    rectangle "serial: mon:stdio\n-nographic" as serial #CFD8DC
-    rectangle "user-mode networking\nhostfwd tcp::2222→:22" as usernet #CFD8DC
+rectangle "QEMU" as qemu #E0E0E0 {
+    rectangle "x86_64: i440FX, IDE, PCI virtio" as x86 #CFD8DC
+    rectangle "aarch64: virt-4.2, MMIO virtio" as arm #CFD8DC
+    rectangle "KVM (same-arch) or TCG (cross)" as accel #D1C4E9
 }
 
-' ── Acceleration ─────────────────────────────────────────
-rectangle "Acceleration" as accel #EDE7F6 {
-    rectangle "KVM\n--enable-kvm --cpu host\n(same-arch, /dev/kvm)" as kvm #D1C4E9
-    rectangle "TCG (software emulation)\n--cpu cortex-a57 | max\n(cross-arch)" as tcg #D1C4E9
-}
+rectangle "QNX Neutrino guest\n/data/home/root/*\nSSH :2222 → :22" as guest #C8E6C9
 
-' ── QNX guest ────────────────────────────────────────────
-rectangle "QNX Neutrino (guest)" as guest #C8E6C9 {
-    rectangle "/data/home/root/\nbinaries" as guest_bin #A5D6A7
-    rectangle "SSH on port 22\n(forwarded to host:2222)" as guest_ssh #A5D6A7
-}
-
-' ── Flow arrows ──────────────────────────────────────────
-env -down-> mkqnx : "configures"
-bins -right-> snippet : "mapped via\ndata_files.custom"
-snippet -down-> mkqnx : "file mapping\n[uid=0 gid=0 perms=0755]\nhome/root/bin=<path>"
-kernel -down-> mkqnx : "bundled into IFS"
-
-mkqnx -down-> ifs : "--type=qemu\n--arch=x86_64|aarch64le\n--build"
+' ── Flow ─────────────────────────────────────────────────
+bins -right-> snippet : "file mapping"
+snippet -down-> mkqnx : "[uid=0 gid=0 perms=0755]\nhome/root/bin=<path>"
+mkqnx -down-> ifs : "--type=qemu --build"
 mkqnx -down-> disk
-
-ifs -down-> qemu : "-kernel ifs.bin"
-disk -down-> qemu : "-drive disk-qemu.vmdk"
-
-accel -right-> qemu : "acceleration mode"
-usernet -down-> guest_ssh
-serial -down-> guest
-
-qemu -down-> guest : "boots QNX Neutrino"
-
-note bottom of snippet
-  **data_files.custom** (mkqnximage snippet)
-  Maps host files into the QNX disk image:
-  [uid=0 gid=0 perms=0755] home/root/hello_world=<staged>
-  [uid=0 gid=0 perms=0755] home/root/tests/test_name=<staged>
-  Paths are relative to /data/ in the guest.
-end note
-
-@enduml
+ifs -down-> qemu : "-kernel"
+disk -down-> qemu : "-drive"
+qemu -down-> guest : "boots"
 
 @enduml

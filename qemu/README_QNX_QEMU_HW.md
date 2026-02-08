@@ -3,6 +3,8 @@
 QNX and QEMU tools, image formats, virtual devices, and acceleration
 used to build and run the QNX virtual machine.
 
+![QNX QEMU — Image Build & Boot](../doc/qemu/qnx_filesystem_build.png)
+
 ---
 
 ## QNX Image Build (`mkqnximage`)
