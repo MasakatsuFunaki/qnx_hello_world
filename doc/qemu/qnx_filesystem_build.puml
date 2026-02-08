@@ -1,30 +1,28 @@
 @startuml qnx_filesystem_build
 !theme plain
-skinparam backgroundColor #FEFEFE
 skinparam defaultFontName Monospaced
-skinparam arrowColor #555555
 
 title **QNX QEMU — Image Build & Boot**
 
-rectangle "Cross-compiled\nbinaries" as bins #E8F5E9
-rectangle "data_files.custom\n(snippet)" as snippet #B2DFDB
+rectangle "Cross-compiled\nbinaries" as bins
+rectangle "data_files.custom\n(snippet)" as snippet
 
-rectangle "QNX SDP 8.0" as sdp #FFF3E0 {
-    rectangle "mkqnximage" as mkqnx #FFE0B2
+rectangle "QNX SDP 8.0" as sdp {
+    rectangle "mkqnximage" as mkqnx
 }
 
-rectangle "mkqnximage output" as output #FCE4EC {
-    rectangle "ifs.bin\n(micro-kernel + drivers)" as ifs #F8BBD0
-    rectangle "disk-qemu.vmdk\n(root filesystem)" as disk #F8BBD0
+rectangle "mkqnximage output" as output {
+    rectangle "ifs.bin\n(micro-kernel + drivers)" as ifs
+    rectangle "disk-qemu.vmdk\n(root filesystem)" as disk
 }
 
-rectangle "QEMU" as qemu #E0E0E0 {
-    rectangle "x86_64: i440FX, IDE, PCI virtio" as x86 #CFD8DC
-    rectangle "aarch64: virt-4.2, MMIO virtio" as arm #CFD8DC
-    rectangle "KVM (same-arch) or TCG (cross)" as accel #D1C4E9
+rectangle "QEMU" as qemu {
+    rectangle "x86_64: i440FX, IDE, PCI virtio" as x86
+    rectangle "aarch64: virt-4.2, MMIO virtio" as arm
+    rectangle "KVM (same-arch) or TCG (cross)" as accel
 }
 
-rectangle "QNX Neutrino guest\n/data/home/root/*\nSSH :2222 → :22" as guest #C8E6C9
+rectangle "QNX Neutrino guest\n/data/home/root/*\nSSH :2222 → :22" as guest
 
 ' ── Flow ─────────────────────────────────────────────────
 bins -right-> snippet : "file mapping"

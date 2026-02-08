@@ -1,0 +1,32 @@
+@startuml toolchain
+!theme plain
+skinparam defaultFontName Monospaced
+
+title **QNX Bazel Cross-Compilation Toolchain**
+
+rectangle "Bazel" as bazel {
+    rectangle ".bazelrc\n--config=qnx_x86_64\n--config=qnx_aarch64" as rc
+}
+
+rectangle "toolchain/" as tc {
+    rectangle "BUILD\nplatform + cc_toolchain\n(x86_64, aarch64)" as build
+    rectangle "cc_toolchain_config.bzl\ntool paths, flags, includes" as config
+    rectangle "qnx_sdk.bzl\nlocates QNX SDP at build time" as sdk
+}
+
+rectangle "QNX SDP 8.0" as sdp {
+    rectangle "GCC 12.2 cross-compilers\nx86_64-pc-nto-qnx8.0.0-gcc\naarch64-unknown-nto-qnx8.0.0-gcc" as gcc
+    rectangle "QNX headers + libs\ntarget/qnx/usr/include\ntarget/qnx/{arch}/lib" as headers
+}
+
+rectangle "bazel-bin/\nQNX ELF binaries" as output
+
+rc -down-> build : selects platform
+build -down-> config : configures
+sdk -right-> sdp : resolves path
+config -down-> gcc : invokes
+config -down-> headers : includes + links
+gcc -down-> output : produces
+headers -down-> output
+
+@enduml
