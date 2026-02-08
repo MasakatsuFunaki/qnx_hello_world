@@ -3,9 +3,16 @@ module(name = "hello_world")
 # Add platforms for cross-compilation support
 bazel_dep(name = "platforms", version = "0.0.11")
 
+# Python support for QEMU management scripts (py_binary targets)
+bazel_dep(name = "rules_python", version = "1.1.0")
+
 # Locate the QNX SDP via environment variables (QNX_ROOT, QNX_TARGET, or QNX_HOST)
 qnx_sdk = use_extension("//toolchain:qnx_sdk.bzl", "qnx_sdk")
 use_repo(qnx_sdk, "qnx_sdk")
+
+# Python runtime toolchain — no platform constraints, so py_binary works
+# even when --platforms is set to a cross-compilation target like QNX.
+register_toolchains("@rules_python//python/runtime_env_toolchains:all")
 
 # Register QNX toolchains for all supported architectures
 register_toolchains(

@@ -1,5 +1,7 @@
 # BUILD file for testing build features: defines, copts, select(), includes
 
+package(default_visibility = ["//tests:__pkg__", "//qemu:__pkg__"])
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Test 1: defines and select()
 # ─────────────────────────────────────────────────────────────────────────────

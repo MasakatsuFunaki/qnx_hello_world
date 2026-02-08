@@ -1,4 +1,6 @@
 # BUILD file for C++ language feature tests
+
+package(default_visibility = ["//tests:__pkg__", "//qemu:__pkg__"])
 # Each target compiles as a standalone binary to verify the toolchain
 # handles the specific C++ feature correctly.
 

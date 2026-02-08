@@ -5,6 +5,8 @@
 # Note: QNX GCC supports building shared objects via -shared.
 # We test both a regular library and a binary that links it.
 
+package(default_visibility = ["//tests:__pkg__", "//qemu:__pkg__"])
+
 cc_library(
     name = "stringutils",
     srcs = ["stringutils.cpp"],

@@ -1,6 +1,8 @@
 # BUILD file for static library test
 # Tests: cc_library (static), deps, hdrs, includes
 
+package(default_visibility = ["//tests:__pkg__", "//qemu:__pkg__"])
+
 cc_library(
     name = "mathlib",
     srcs = ["mathlib.cpp"],
