@@ -1,8 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# QNX QEMU targets (Python via sh_binary launchers)
-#
-# sh_binary wrappers invoke python3 directly, avoiding Python toolchain
-# conflicts when --platforms is set to a cross-compilation target (QNX).
+# QNX QEMU targets (Python)
 #
 # Build & run:
 #   bazel run //qemu:run_qemu --config=qnx_x86_64
@@ -14,33 +11,34 @@
 #   bazel run //qemu:clean_qemu
 # ─────────────────────────────────────────────────────────────────────────────
 
-_PYTHON_SRCS = glob(["qnx_qemu/**/*.py"])
+py_library(
+    name = "qnx_qemu",
+    srcs = glob(["qnx_qemu/**/*.py"]),
+    imports = ["."],
+)
 
-sh_binary(
+py_binary(
     name = "run_qemu",
-    srcs = ["launcher_run.sh"],
+    srcs = ["run_qnx_qemu.py"],
+    main = "run_qnx_qemu.py",
     args = ["$(location //src:hello_world)"],
-    data = [
-        "//src:hello_world",
-        "run_qnx_qemu.py",
-    ] + _PYTHON_SRCS,
+    data = ["//src:hello_world"],
+    deps = [":qnx_qemu"],
     # This target needs the binary cross-compiled for QNX x86_64.
     # Always invoke with: --config=qnx_x86_64
     # e.g.:  bazel run //qemu:run_qemu --config=qnx_x86_64
 )
 
-sh_binary(
+py_binary(
     name = "stop_qemu",
-    srcs = ["launcher_stop.sh"],
-    data = [
-        "stop_qnx_qemu.py",
-    ] + _PYTHON_SRCS,
+    srcs = ["stop_qnx_qemu.py"],
+    main = "stop_qnx_qemu.py",
+    deps = [":qnx_qemu"],
 )
 
-sh_binary(
+py_binary(
     name = "clean_qemu",
-    srcs = ["launcher_clean.sh"],
-    data = [
-        "clean_qnx_qemu.py",
-    ] + _PYTHON_SRCS,
+    srcs = ["clean_qnx_qemu.py"],
+    main = "clean_qnx_qemu.py",
+    deps = [":qnx_qemu"],
 )
