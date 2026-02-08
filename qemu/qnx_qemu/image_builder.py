@@ -18,9 +18,10 @@ from .vm_workspace import VmWorkspace
 class MkqnximageBuilder(IImageBuilder):
     """Build a QNX QEMU image using the QNX SDP's mkqnximage tool."""
 
-    def __init__(self, mkqnximage: Path, qnx_sdk_root: Path) -> None:
+    def __init__(self, mkqnximage: Path, qnx_sdk_root: Path, arch: str = "x86_64") -> None:
         self._mkqnximage = mkqnximage
         self._qnx_sdk_root = qnx_sdk_root
+        self._arch = arch
 
     # ── IImageBuilder ──────────────────────────────────────────────────
 
@@ -37,10 +38,11 @@ class MkqnximageBuilder(IImageBuilder):
         args = [
             str(self._mkqnximage),
             "--type=qemu",
-            "--arch=x86_64",
+            f"--arch={self._arch}",
             f"--ssh-ident={ssh_pubkey}",
             "--noprompt",
             "--force",
+            "--clean",
             "--build",
         ]
 

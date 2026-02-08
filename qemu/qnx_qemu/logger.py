@@ -37,7 +37,7 @@ class ConsoleLogger:
         print(f"  WARNING: {message}")
 
     @staticmethod
-    def ssh_instructions(ssh_port: int, binary_name: str) -> None:
+    def ssh_instructions(ssh_port: int, binary_name: str, staged_tests: list | None = None) -> None:
         print()
         print(ConsoleLogger._DOUBLE_RULE)
         print("  After boot, SSH into the QNX VM (from another terminal):")
@@ -47,6 +47,12 @@ class ConsoleLogger:
         print("  Then run the demo:")
         print()
         print(f"    /data/home/root/{binary_name}")
+        if staged_tests:
+            print()
+            print(f"  Run tests ({len(staged_tests)} staged):")
+            print()
+            for t in staged_tests:
+                print(f"    /data/home/root/tests/{t.name}")
         print()
         print("  To exit QEMU console: Ctrl-A X")
         print(ConsoleLogger._DOUBLE_RULE)

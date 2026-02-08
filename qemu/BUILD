@@ -3,6 +3,9 @@
 #
 # Build & run:
 #   bazel run //qemu:run_qemu --config=qnx_x86_64
+#   bazel run //qemu:run_qemu --config=qnx_aarch64
+#
+# The architecture is auto-detected from the --config flag.
 #
 # Stop:
 #   bazel run //qemu:stop_qemu
@@ -21,12 +24,17 @@ py_binary(
     name = "run_qemu",
     srcs = ["run_qnx_qemu.py"],
     main = "run_qnx_qemu.py",
-    args = ["$(location //src:hello_world)"],
-    data = ["//src:hello_world"],
+    args = [
+        "$(location //src:hello_world)",
+    ] + select({
+        "@platforms//cpu:x86_64": ["--arch", "x86_64"],
+        "@platforms//cpu:aarch64": ["--arch", "aarch64"],
+    }),
+    data = [
+        "//src:hello_world",
+        "//tests:all_tests",
+    ],
     deps = [":qnx_qemu"],
-    # This target needs the binary cross-compiled for QNX x86_64.
-    # Always invoke with: --config=qnx_x86_64
-    # e.g.:  bazel run //qemu:run_qemu --config=qnx_x86_64
 )
 
 py_binary(

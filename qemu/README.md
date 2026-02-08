@@ -1,6 +1,6 @@
 # QNX QEMU Runner
 
-Run a QNX x86_64 virtual machine with your cross-compiled binary baked into the filesystem.
+Run a QNX virtual machine (x86_64 or aarch64) with your cross-compiled binary baked into the filesystem.
 
 ## Architecture
 
@@ -40,10 +40,19 @@ qemu/
 ### 1. Install QEMU
 
 ```bash
+# x86_64 target
 sudo apt install qemu-system-x86
+
+# aarch64 target
+sudo apt install qemu-system-arm
 ```
 
-### 2. Enable KVM acceleration
+### 2. Enable KVM acceleration (same-arch only)
+
+KVM is used automatically when host and target architectures match and
+`/dev/kvm` is writable. For cross-architecture emulation (e.g. aarch64
+on an x86_64 host), QEMU falls back to software emulation — slower but
+fully functional.
 
 ```bash
 sudo adduser $(whoami) kvm
@@ -62,7 +71,11 @@ If you already have a key, it will be used automatically.
 ### Launch the QNX VM
 
 ```bash
+# x86_64
 bazel run //qemu:run_qemu --config=qnx_x86_64
+
+# aarch64
+bazel run //qemu:run_qemu --config=qnx_aarch64
 ```
 
 > **Important:** Run this in a regular terminal (not the VS Code chat terminal),
@@ -71,9 +84,10 @@ bazel run //qemu:run_qemu --config=qnx_x86_64
 > **To exit QEMU:** Press `Ctrl-A` then `X` in the terminal window. Typing `exit` only restarts the QNX shell.
 
 This will:
-1. Cross-compile `//src:hello_world` for QNX x86_64
-2. Build a QNX QEMU disk image with the binary at `/data/home/root/hello_world`
-3. Launch QEMU with user-mode networking (SSH on `localhost:2222`)
+1. Cross-compile `//src:hello_world` for the target architecture
+2. Auto-discover and stage all test binaries from `//tests/...`
+3. Build a QNX QEMU disk image with the binary at `/data/home/root/hello_world`
+4. Launch QEMU with user-mode networking (SSH on `localhost:2222`)
 
 ### SSH into the running VM
 
@@ -110,6 +124,7 @@ bazel run //qemu:clean_qemu
 | Environment Variable   | Default    | Description                        |
 |------------------------|------------|------------------------------------|
 | `QNX_QEMU_SSH_PORT`   | `2222`     | Host port forwarded to guest SSH   |
+| `QNX_QEMU_ARCH`      | `x86_64`   | Target architecture (`x86_64` or `aarch64`) |
 | `QNX_QEMU_RAM`        | `1G`       | QEMU memory                       |
 | `QNX_QEMU_SMP`        | `2`        | Number of CPU cores                |
 | `QNX_ROOT`            | `~/qnx800` | QNX SDP install location          |
@@ -124,6 +139,21 @@ QNX_QEMU_RAM=2G QNX_QEMU_SMP=4 bazel run //qemu:run_qemu --config=qnx_x86_64
 
 - Uses `mkqnximage` from the QNX SDP to build the IFS + disk image
 - Injects the Bazel-built binary via `local/snippets/data_files.custom`
+- Auto-discovers and stages all test binaries at `/data/home/root/tests/`
 - Launches QEMU with **user-mode networking** (no bridge/libvirt/root needed)
-- KVM acceleration is used automatically when `/dev/kvm` is writable
+- KVM acceleration is used automatically when host arch matches target and `/dev/kvm` is writable
+
+### Architecture-specific details
+
+| | x86_64 | aarch64 |
+|---|---|---|
+| Machine | default (i440FX) | `virt-4.2` |
+| Disk | IDE (`devb-eide`) | virtio-blk MMIO (`devb-virtio`) |
+| Network | `virtio-net-pci` | `virtio-net-device` (MMIO) |
+| RNG | `virtio-rng-pci` | `virtio-rng-device` (MMIO) |
+| KVM | on x86_64 host | on aarch64 host only |
+
+The aarch64 configuration matches QNX's official `runimage` script — all
+devices use MMIO virtio transports (no PCI bus needed).
+
 - VM workspace is stored in `.qnx_qemu_vm/` (git-ignored)

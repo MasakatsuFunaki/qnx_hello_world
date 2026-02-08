@@ -1,6 +1,8 @@
 # BUILD file for header-only library test
 # Tests: cc_library with hdrs only (no srcs), deps on header-only lib
 
+package(default_visibility = ["//tests:__pkg__", "//qemu:__pkg__"])
+
 cc_library(
     name = "event",
     hdrs = ["event.hpp"],

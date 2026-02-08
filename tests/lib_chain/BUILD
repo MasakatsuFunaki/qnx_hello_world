@@ -3,6 +3,8 @@
 #
 # Dependency graph:   app -> config -> logger
 
+package(default_visibility = ["//tests:__pkg__", "//qemu:__pkg__"])
+
 cc_library(
     name = "logger",
     srcs = ["logger.cpp"],

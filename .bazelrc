@@ -18,7 +18,8 @@ build:qnx_aarch64 --config=qnx
 build:qnx_aarch64 --platforms=//toolchain:qnx_aarch64
 
 # ─────────────────────────────────────────────────────────────────────────────
-# QNX QEMU runner
+# QNX QEMU runner — architecture is auto-detected from --config
 # Usage:
 #   bazel run //qemu:run_qemu --config=qnx_x86_64
+#   bazel run //qemu:run_qemu --config=qnx_aarch64
 # ─────────────────────────────────────────────────────────────────────────────
