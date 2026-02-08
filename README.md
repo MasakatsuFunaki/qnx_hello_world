@@ -19,3 +19,7 @@ bazel build //src:hello_world --config=qnx_x86_64
 # Run on QNX (QEMU)
 bazel run //qemu:run_qemu --config=qnx_x86_64
 ```
+
+## License
+
+This project is licensed under the [GNU Lesser General Public License v3.0](LICENSE).
