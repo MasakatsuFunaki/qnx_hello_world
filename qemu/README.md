@@ -4,26 +4,7 @@ Run a QNX virtual machine (x86_64 or aarch64) with your cross-compiled binary ba
 
 ## Architecture
 
-The QEMU management scripts are implemented in Python using C++ design patterns:
-
-```
-qemu/
-├── run_qnx_qemu.py          # Entry point: build image & launch QEMU
-├── stop_qnx_qemu.py         # Entry point: stop running VM
-├── clean_qnx_qemu.py        # Entry point: wipe VM workspace
-└── qnx_qemu/                # Python package (domain library)
-    ├── interfaces.py         # ABCs (C++ pure-virtual interfaces)
-    ├── config.py             # QemuConfig dataclass (env var defaults)
-    ├── logger.py             # Structured console output
-    ├── path_resolver.py      # Workspace / binary / SDK path resolution
-    ├── ssh.py                # SSH key detection / generation
-    ├── vm_workspace.py       # VM directory & staging management
-    ├── process.py            # PID-file-based process lifecycle
-    ├── acceleration.py       # Strategy pattern: KVM vs emulation
-    ├── qemu_command.py       # Builder pattern: QEMU CLI construction
-    ├── image_builder.py      # mkqnximage wrapper (IImageBuilder)
-    └── manager.py            # Facade: QemuManager orchestrates all
-```
+The QEMU management scripts are implemented in Python using C++ design patterns.
 
 ### Design Patterns Used
 
@@ -139,32 +120,13 @@ QNX_QEMU_RAM=2G QNX_QEMU_SMP=4 bazel run //qemu:run_qemu --config=qnx_x86_64
 
 ![QNX Filesystem Build Flow](../doc/qemu/qnx_filesystem_build.png)
 
-See [doc/qemu/qnx_filesystem_build.puml](../doc/qemu/qnx_filesystem_build.puml) for the PlantUML source.
+1. `mkqnximage` (QNX SDP) builds an IFS boot image + VMDK disk image
+2. Cross-compiled binaries are injected via `local/snippets/data_files.custom`
+3. QEMU boots the IFS as `-kernel`, mounts the VMDK as the root disk
+4. User-mode networking forwards SSH (host `localhost:2222` → guest `:22`)
+5. KVM acceleration is used automatically when host arch matches target
 
-To regenerate the PNG:
+VM workspace is stored in `.qnx_qemu_vm/` (git-ignored).
 
-```bash
-cd doc/qemu
-java -jar plantuml.jar -tpng qnx_filesystem_build.puml
-```
-
-- Uses `mkqnximage` from the QNX SDP to build the IFS + disk image
-- Injects the Bazel-built binary via `local/snippets/data_files.custom`
-- Auto-discovers and stages all test binaries at `/data/home/root/tests/`
-- Launches QEMU with **user-mode networking** (no bridge/libvirt/root needed)
-- KVM acceleration is used automatically when host arch matches target and `/dev/kvm` is writable
-
-### Architecture-specific details
-
-| | x86_64 | aarch64 |
-|---|---|---|
-| Machine | default (i440FX) | `virt-4.2` |
-| Disk | IDE (`devb-eide`) | virtio-blk MMIO (`devb-virtio`) |
-| Network | `virtio-net-pci` | `virtio-net-device` (MMIO) |
-| RNG | `virtio-rng-pci` | `virtio-rng-device` (MMIO) |
-| KVM | on x86_64 host | on aarch64 host only |
-
-The aarch64 configuration matches QNX's official `runimage` script — all
-devices use MMIO virtio transports (no PCI bus needed).
-
-- VM workspace is stored in `.qnx_qemu_vm/` (git-ignored)
+For full details on QNX image building, QEMU virtual devices, machine types,
+and acceleration flags, see [README_QNX_QEMU_HW.md](README_QNX_QEMU_HW.md).

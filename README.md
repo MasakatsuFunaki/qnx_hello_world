@@ -54,21 +54,3 @@ bazel build //tests/... --config=qnx_x86_64
 ```
 
 See [tests/README.md](tests/README.md) for the full list of test categories and usage.
-
-## Project Structure
-
-```
-├── src/
-│   ├── BUILD              # cc_binary target
-│   └── main.cpp           # Source code
-├── tests/                 # Cross-compilation test suite
-│   └── README.md          # Test categories & usage
-├── toolchain/
-│   ├── BUILD              # Platform & toolchain definitions
-│   ├── cc_toolchain_config.bzl  # Cross-compiler config
-│   └── qnx_sdk.bzl       # QNX SDP repo rule
-├── doc/bazel/
-│   └── bazel_architecture.puml  # Architecture diagram
-├── MODULE.bazel           # Bazel module config
-└── .bazelrc               # Build configs
-```

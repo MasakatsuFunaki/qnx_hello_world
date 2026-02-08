@@ -6,89 +6,105 @@ skinparam arrowColor #555555
 skinparam rectangleBorderColor #888888
 skinparam noteBorderColor #AAAAAA
 
-title **QNX Filesystem Build & Executable Bake-in Flow**
+title **QNX QEMU — Image Build & Virtual Hardware**
 
-' ── Sources ──────────────────────────────────────────────
-rectangle "Bazel Cross-Compile" as bazel #E8F0FE {
-    rectangle "src/main.cpp" as src #E8F5E9
-    rectangle "tests/**/*.cpp" as tests #E8F5E9
-    rectangle "toolchain/\n(QNX SDP)" as tc #FFF3E0
+' ── QNX SDP ──────────────────────────────────────────────
+rectangle "QNX SDP 8.0" as sdp #FFF3E0 {
+    rectangle "qnxsdp-env.sh\nsets QNX_TARGET, QNX_HOST" as env #FFE0B2
+    rectangle "mkqnximage\n(host/common/bin/)" as mkqnx #FFE0B2
+    rectangle "procnto-smp-instr\n(QNX Neutrino micro-kernel)" as kernel #FFE0B2
 }
 
-' ── Bazel output ─────────────────────────────────────────
-rectangle "bazel-bin/" as bazelbin #FFFDE7 {
-    rectangle "src/hello_world" as hw_bin
-    rectangle "tests/*_test" as test_bins
-}
+' ── Inputs to mkqnximage ─────────────────────────────────
+rectangle "Cross-compiled\nbinaries" as bins #E8F5E9
 
-' ── QemuManager facade ───────────────────────────────────
-rectangle "QemuManager\n(Facade)" as manager #EDE7F6
-
-' ── Path Resolution ──────────────────────────────────────
-rectangle "PathResolver" as resolver #E8EAF6 {
-    note right
-      resolve_binary()
-      discover_test_binaries()
-      Searches: runfiles → bazel-bin/
-    end note
-}
-
-' ── VM Workspace staging ─────────────────────────────────
-rectangle ".qnx_qemu_vm/" as vmdir #E0F7FA {
-    rectangle "staging/bin/\nhello_world" as staged_bin #B2EBF2
-    rectangle "staging/tests/\n*_test" as staged_tests #B2EBF2
+rectangle "mkqnximage workspace" as ws #E0F7FA {
     rectangle "local/snippets/\ndata_files.custom" as snippet #B2DFDB
 }
 
-' ── mkqnximage ───────────────────────────────────────────
-rectangle "mkqnximage\n(QNX SDP tool)" as mkqnx #FFE0B2
-
-' ── Output images ────────────────────────────────────────
-rectangle "output/" as output #FCE4EC {
-    rectangle "ifs.bin\n(IFS kernel image)" as ifs #F8BBD0
-    rectangle "disk-qemu.vmdk\n(disk image)" as disk #F8BBD0
+' ── mkqnximage output ────────────────────────────────────
+rectangle "mkqnximage output/" as output #FCE4EC {
+    rectangle "ifs.bin" as ifs #F8BBD0
+    rectangle "disk-qemu.vmdk" as disk #F8BBD0
 }
 
-' ── QNX guest filesystem ─────────────────────────────────
-rectangle "QNX Guest Filesystem" as guest #C8E6C9 {
-    rectangle "/data/home/root/\nhello_world" as guest_bin #A5D6A7
-    rectangle "/data/home/root/tests/\n*_test" as guest_tests #A5D6A7
+note right of ifs
+  **IFS (Image Filesystem)**
+  Boot image loaded by QEMU as -kernel
+  Contains:
+  • procnto-smp-instr (micro-kernel)
+  • startup code & hw detection
+  • early drivers (block, net, serial)
+  • ksh shell & core utilities
+end note
+
+note right of disk
+  **VMDK disk image**
+  Virtual hard disk with QNX root
+  filesystem (/, /data/, ...)
+  Custom binaries land under
+  /data/home/root/
+end note
+
+' ── QEMU virtual hardware ────────────────────────────────
+rectangle "QEMU Virtual Machine" as qemu #E0E0E0 {
+
+    rectangle "x86_64 machine" as x86 #EEEEEE {
+        rectangle "i440FX chipset\n(default PC)" as x86_mach
+        rectangle "IDE disk\n(devb-eide)" as x86_disk #CFD8DC
+        rectangle "virtio-net-pci" as x86_net #CFD8DC
+        rectangle "virtio-rng-pci" as x86_rng #CFD8DC
+    }
+
+    rectangle "aarch64 machine" as arm #EEEEEE {
+        rectangle "virt-4.2\n(ARM virtual platform)" as arm_mach
+        rectangle "virtio-blk-device\nMMIO (devb-virtio)" as arm_disk #CFD8DC
+        rectangle "virtio-net-device\nMMIO" as arm_net #CFD8DC
+        rectangle "virtio-rng-device\nMMIO" as arm_rng #CFD8DC
+    }
+
+    rectangle "serial: mon:stdio\n-nographic" as serial #CFD8DC
+    rectangle "user-mode networking\nhostfwd tcp::2222→:22" as usernet #CFD8DC
 }
 
-' ── QEMU ─────────────────────────────────────────────────
-rectangle "QEMU\n(x86_64 | aarch64)" as qemu #E0E0E0
+' ── Acceleration ─────────────────────────────────────────
+rectangle "Acceleration" as accel #EDE7F6 {
+    rectangle "KVM\n--enable-kvm --cpu host\n(same-arch, /dev/kvm)" as kvm #D1C4E9
+    rectangle "TCG (software emulation)\n--cpu cortex-a57 | max\n(cross-arch)" as tcg #D1C4E9
+}
+
+' ── QNX guest ────────────────────────────────────────────
+rectangle "QNX Neutrino (guest)" as guest #C8E6C9 {
+    rectangle "/data/home/root/\nbinaries" as guest_bin #A5D6A7
+    rectangle "SSH on port 22\n(forwarded to host:2222)" as guest_ssh #A5D6A7
+}
 
 ' ── Flow arrows ──────────────────────────────────────────
-src -down-> hw_bin : cross-compile
-tests -down-> test_bins : cross-compile
-tc -right-> bazelbin : produces
+env -down-> mkqnx : "configures"
+bins -right-> snippet : "mapped via\ndata_files.custom"
+snippet -down-> mkqnx : "file mapping\n[uid=0 gid=0 perms=0755]\nhome/root/bin=<path>"
+kernel -down-> mkqnx : "bundled into IFS"
 
-hw_bin -down-> resolver
-test_bins -down-> resolver
-
-manager -left-> resolver : "resolve_binary()\ndiscover_test_binaries()"
-manager -down-> vmdir : "stage_binary()\nstage_test_binaries()\nwrite_data_files_snippet()"
-
-resolver -down-> manager : "returns binary paths"
-
-staged_bin -down-> snippet
-staged_tests -down-> snippet
-
-snippet -down-> mkqnx : "feeds file mapping"
-manager -down-> mkqnx : "build()"
-mkqnx -down-> ifs : "builds IFS"
-mkqnx -down-> disk : "builds disk"
+mkqnx -down-> ifs : "--type=qemu\n--arch=x86_64|aarch64le\n--build"
+mkqnx -down-> disk
 
 ifs -down-> qemu : "-kernel ifs.bin"
 disk -down-> qemu : "-drive disk-qemu.vmdk"
 
-qemu -down-> guest : "boots into"
+accel -right-> qemu : "acceleration mode"
+usernet -down-> guest_ssh
+serial -down-> guest
+
+qemu -down-> guest : "boots QNX Neutrino"
 
 note bottom of snippet
-  **data_files.custom** maps staged
-  executables into the QNX filesystem:
-  [uid=0 gid=0 perms=0755] home/root/hello_world=<staged_path>
-  [uid=0 gid=0 perms=0755] home/root/tests/*_test=<staged_path>
+  **data_files.custom** (mkqnximage snippet)
+  Maps host files into the QNX disk image:
+  [uid=0 gid=0 perms=0755] home/root/hello_world=<staged>
+  [uid=0 gid=0 perms=0755] home/root/tests/test_name=<staged>
+  Paths are relative to /data/ in the guest.
 end note
+
+@enduml
 
 @enduml
