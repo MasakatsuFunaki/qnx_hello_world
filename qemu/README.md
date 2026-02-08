@@ -137,6 +137,17 @@ QNX_QEMU_RAM=2G QNX_QEMU_SMP=4 bazel run //qemu:run_qemu --config=qnx_x86_64
 
 ## How it works
 
+![QNX Filesystem Build Flow](../doc/qemu/qnx_filesystem_build.png)
+
+See [doc/qemu/qnx_filesystem_build.puml](../doc/qemu/qnx_filesystem_build.puml) for the PlantUML source.
+
+To regenerate the PNG:
+
+```bash
+cd doc/qemu
+java -jar plantuml.jar -tpng qnx_filesystem_build.puml
+```
+
 - Uses `mkqnximage` from the QNX SDP to build the IFS + disk image
 - Injects the Bazel-built binary via `local/snippets/data_files.custom`
 - Auto-discovers and stages all test binaries at `/data/home/root/tests/`

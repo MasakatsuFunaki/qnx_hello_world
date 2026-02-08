@@ -1,0 +1,94 @@
+@startuml qnx_filesystem_build
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Monospaced
+skinparam arrowColor #555555
+skinparam rectangleBorderColor #888888
+skinparam noteBorderColor #AAAAAA
+
+title **QNX Filesystem Build & Executable Bake-in Flow**
+
+' ── Sources ──────────────────────────────────────────────
+rectangle "Bazel Cross-Compile" as bazel #E8F0FE {
+    rectangle "src/main.cpp" as src #E8F5E9
+    rectangle "tests/**/*.cpp" as tests #E8F5E9
+    rectangle "toolchain/\n(QNX SDP)" as tc #FFF3E0
+}
+
+' ── Bazel output ─────────────────────────────────────────
+rectangle "bazel-bin/" as bazelbin #FFFDE7 {
+    rectangle "src/hello_world" as hw_bin
+    rectangle "tests/*_test" as test_bins
+}
+
+' ── QemuManager facade ───────────────────────────────────
+rectangle "QemuManager\n(Facade)" as manager #EDE7F6
+
+' ── Path Resolution ──────────────────────────────────────
+rectangle "PathResolver" as resolver #E8EAF6 {
+    note right
+      resolve_binary()
+      discover_test_binaries()
+      Searches: runfiles → bazel-bin/
+    end note
+}
+
+' ── VM Workspace staging ─────────────────────────────────
+rectangle ".qnx_qemu_vm/" as vmdir #E0F7FA {
+    rectangle "staging/bin/\nhello_world" as staged_bin #B2EBF2
+    rectangle "staging/tests/\n*_test" as staged_tests #B2EBF2
+    rectangle "local/snippets/\ndata_files.custom" as snippet #B2DFDB
+}
+
+' ── mkqnximage ───────────────────────────────────────────
+rectangle "mkqnximage\n(QNX SDP tool)" as mkqnx #FFE0B2
+
+' ── Output images ────────────────────────────────────────
+rectangle "output/" as output #FCE4EC {
+    rectangle "ifs.bin\n(IFS kernel image)" as ifs #F8BBD0
+    rectangle "disk-qemu.vmdk\n(disk image)" as disk #F8BBD0
+}
+
+' ── QNX guest filesystem ─────────────────────────────────
+rectangle "QNX Guest Filesystem" as guest #C8E6C9 {
+    rectangle "/data/home/root/\nhello_world" as guest_bin #A5D6A7
+    rectangle "/data/home/root/tests/\n*_test" as guest_tests #A5D6A7
+}
+
+' ── QEMU ─────────────────────────────────────────────────
+rectangle "QEMU\n(x86_64 | aarch64)" as qemu #E0E0E0
+
+' ── Flow arrows ──────────────────────────────────────────
+src -down-> hw_bin : cross-compile
+tests -down-> test_bins : cross-compile
+tc -right-> bazelbin : produces
+
+hw_bin -down-> resolver
+test_bins -down-> resolver
+
+manager -left-> resolver : "resolve_binary()\ndiscover_test_binaries()"
+manager -down-> vmdir : "stage_binary()\nstage_test_binaries()\nwrite_data_files_snippet()"
+
+resolver -down-> manager : "returns binary paths"
+
+staged_bin -down-> snippet
+staged_tests -down-> snippet
+
+snippet -down-> mkqnx : "feeds file mapping"
+manager -down-> mkqnx : "build()"
+mkqnx -down-> ifs : "builds IFS"
+mkqnx -down-> disk : "builds disk"
+
+ifs -down-> qemu : "-kernel ifs.bin"
+disk -down-> qemu : "-drive disk-qemu.vmdk"
+
+qemu -down-> guest : "boots into"
+
+note bottom of snippet
+  **data_files.custom** maps staged
+  executables into the QNX filesystem:
+  [uid=0 gid=0 perms=0755] home/root/hello_world=<staged_path>
+  [uid=0 gid=0 perms=0755] home/root/tests/*_test=<staged_path>
+end note
+
+@enduml
