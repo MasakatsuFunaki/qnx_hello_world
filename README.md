@@ -25,13 +25,12 @@ bazel build //qemu:run_qemu --config=qnx_aarch64
 
 bazel run //qemu:run_qemu --config=qnx_x86_64
 bazel run //qemu:run_qemu --config=qnx_aarch64
-```
 
 #Stop and clean a  QEMU instance 
 bazel run //qemu:clean_qemu
 bazel run //qemu:stop_qemu
-
+```
 
 ## License
 
-This project is licensed under the [GNU Lesser General Public License v3.0](LICENSE).
+This project is licensed under Apache License Version 2.0, January 2004
