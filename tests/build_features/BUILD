@@ -1,5 +1,8 @@
 # BUILD file for testing build features: defines, copts, select(), includes
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 package(default_visibility = ["//tests:__pkg__", "//qemu:__pkg__"])
 
 # ─────────────────────────────────────────────────────────────────────────────

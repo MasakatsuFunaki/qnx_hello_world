@@ -1,5 +1,7 @@
 # BUILD file for C++ language feature tests
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
 package(default_visibility = ["//tests:__pkg__", "//qemu:__pkg__"])
 # Each target compiles as a standalone binary to verify the toolchain
 # handles the specific C++ feature correctly.

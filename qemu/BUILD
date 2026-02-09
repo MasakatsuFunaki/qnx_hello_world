@@ -14,6 +14,9 @@
 #   bazel run //qemu:clean_qemu
 # ─────────────────────────────────────────────────────────────────────────────
 
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load("@rules_python//python:py_library.bzl", "py_library")
+
 py_library(
     name = "qnx_qemu",
     srcs = glob(["qnx_qemu/**/*.py"]),

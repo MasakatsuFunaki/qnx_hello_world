@@ -3,6 +3,9 @@ module(name = "hello_world")
 # Add platforms for cross-compilation support
 bazel_dep(name = "platforms", version = "0.0.11")
 
+# C/C++ rules (Bazel 8 requires explicit loads from @rules_cc)
+bazel_dep(name = "rules_cc", version = "0.1.1")
+
 # Python support for QEMU management scripts (py_binary targets)
 bazel_dep(name = "rules_python", version = "1.1.0")
 

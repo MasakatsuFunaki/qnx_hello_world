@@ -14,11 +14,23 @@ Cross-compiled C++ hello world for QNX 8.0 using Bazel.
 
 ```bash
 # Build
-bazel build //src:hello_world --config=qnx_x86_64
+bazel build  //... --config=qnx_x86_64
+
+# Build on QNX (QEMU)
+
+bazel build  //qemu:run_qemu --config=qnx_x86_64
+bazel build //qemu:run_qemu --config=qnx_aarch64
 
 # Run on QNX (QEMU)
+
 bazel run //qemu:run_qemu --config=qnx_x86_64
+bazel run //qemu:run_qemu --config=qnx_aarch64
 ```
+
+#Stop and clean a  QEMU instance 
+bazel run //qemu:clean_qemu
+bazel run //qemu:stop_qemu
+
 
 ## License
 

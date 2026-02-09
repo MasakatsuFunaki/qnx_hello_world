@@ -5,6 +5,9 @@
 # Note: QNX GCC supports building shared objects via -shared.
 # We test both a regular library and a binary that links it.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 package(default_visibility = ["//tests:__pkg__", "//qemu:__pkg__"])
 
 cc_library(

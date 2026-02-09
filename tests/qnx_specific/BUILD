@@ -2,6 +2,8 @@
 # These tests use QNX headers (neutrino, syspage, etc.) and verify the
 # toolchain correctly locates QNX SDP headers and libraries.
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
 package(default_visibility = ["//tests:__pkg__", "//qemu:__pkg__"])
 
 cc_binary(
